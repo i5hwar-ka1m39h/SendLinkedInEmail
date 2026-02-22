@@ -9,12 +9,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse)=>{
     if(message.type === "PAGE_TEXT"){
            const main = async() =>{
           try {
+            const text = cleanText(message.payload);
+
             const response = await axios.post("http://localhost:3000/analyze", {
-              text: message.payload,
+              text,
               userData: {
                 name:"Ishwar Kalmegh",
                 mobileNo:"+917218087576",
-                tech_skill:["MERN", "Nextjs", "Postgres", "Docker", "Linux", "Python"],
+                tech_skill:["MERN", "React", "Nextjs", "Postgres", "Docker", "Linux", "Python"],
                 email:"ishwarkalmegh156@gmail.com",
               }
             })
@@ -36,3 +38,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse)=>{
     if(message.type==="GET_PAGE_TEXT"){sendResponse(pageData)}
     
 })
+
+const cleanText = (text:string):string =>{
+  return text// Remove HTML tags
+    .replace(/<\/?[^>]+(>|$)/g, "")
+    // Remove multiple spaces/newlines
+    .replace(/\s+/g, " ")
+    // Remove common LinkedIn junk
+    .replace(/see more|likes?|comments?|reposts?|follow/i, "")
+    // Trim whitespace
+    .trim();
+}

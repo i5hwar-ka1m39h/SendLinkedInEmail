@@ -1,8 +1,64 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import type { PostData } from "../types/allTypes";
+import axios from "axios";
 
-export const PostCard = ({ postData }: { postData: PostData }) => {
-  
+export const PostCard = () => {
+  const [postData, setPostData] = useState<PostData | null>(null);
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [resumeFile, setResumeFile] = useState<File | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    chrome.runtime.sendMessage(
+      {
+        type: "GET_PAGE_TEXT",
+      },
+      (res) => {
+        setPostData(res.data);
+        setSubject(res.data.emailSubject);
+        setBody(res.data.emailSubject);
+      }
+    );
+  }, []);
+
+  const sendEmail = async () => {
+    try {
+      const formData = new FormData();
+      formData.append("to", postData?.hrEmailIds.join(",") as string)
+      formData.append("subject",subject)
+      formData.append("message", body);
+
+      if(resumeFile){
+        formData.append("resume", resumeFile)
+      }
+      
+      setLoading(true)
+      const response = await axios.post("https://emailsenderauto.onrender.com/sendEmail", {
+      headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: postData?.hrEmailIds,   // multiple recipients
+          subject,
+          body,
+        }),
+      })
+
+      if(response.status !== 200){
+        alert("failed to send email")
+      }
+
+      setLoading(false)
+      alert("email sent")
+    } catch (error) {
+      console.error(error);
+      alert("error sending email");
+    }
+  };
+
+  if (!postData) {
+    return <div> Loading Post data...</div>;
+  }
+
   return (
     <div className="max-w-xl mx-auto bg-white shadow-lg rounded-2xl p-6 space-y-4  h-fit">
       {/* Header */}
@@ -73,8 +129,8 @@ export const PostCard = ({ postData }: { postData: PostData }) => {
         <p className="text-sm font-semibold text-gray-500">Email Subject</p>
         <input
           type="text"
-          value={postData.emailSubject || ""}
-          readOnly
+          value={subject || ""}
+          onChange={(e) => setSubject(e.target.value)}
           className="w-full border border-gray-300 rounded-lg p-2 bg-gray-50"
         />
       </div>
@@ -83,10 +139,19 @@ export const PostCard = ({ postData }: { postData: PostData }) => {
       <div>
         <p className="text-sm font-semibold text-gray-500">Email Body</p>
         <textarea
-          value={postData.emailBody || ""}
-          readOnly
+          value={body || ""}
+          onChange={(e) => setBody(e.target.value)}
           className="w-full border border-gray-300 rounded-lg p-2 bg-gray-50 h-32 resize-none"
         />
+      </div>
+
+      <div>
+        <button
+          className="border rounded-2xl bg-gray-400 p-5"
+          onClick={sendEmail}
+        >
+          Send Email
+        </button>
       </div>
     </div>
   );

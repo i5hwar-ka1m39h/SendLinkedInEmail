@@ -1,33 +1,22 @@
 import { useEffect, useState } from 'react'
 import './App.css'
-
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
 import type {  PostData } from './types/allTypes'
 import { PostCard } from './components/postCard'
 
 function App() {
   
-  const [postData,setPostData] = useState<PostData| null>(null)
-
-  useEffect(()=>{
-    chrome.runtime.sendMessage({
-      type:"GET_PAGE_TEXT"
-    }, (res)=>{
-      setPostData(res.data)
-    })
-  },[])
+ 
 
   
   return (
-    <div className='w-xl h-[800px]'>
-     
-     <div>
-      {postData ?
-      <PostCard postData={postData}/> :
-      <h1>loading ...</h1>
-      }
-     </div>
-
-    </div>
+   <Router>
+    <Routes>
+      <Route path='/' element={<Home/>}/>
+      <Route path='/setup' element={<Setup/>}/>
+      <Route path='/details' element={<PostCard/>}/>
+    </Routes>
+   </Router>
   )
 }
 
